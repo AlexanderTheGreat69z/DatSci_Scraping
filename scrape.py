@@ -47,34 +47,34 @@ from bs4 import BeautifulSoup as bs
 import requests as re
 import pandas as pd
 
+# Download Website Data
 headers = {'Accept-Language': 'en-US,en;q=0.8'}
 url = 'https://www.boxofficemojo.com/year/world/'
 response = re.get(url,headers=headers)
 soup = bs(response.text, "html.parser")
 
 # Get data keys
-headers = soup.find_all('th')
-data_keys = [h.get_text() for h in headers]
-print(data_keys)
+data_keys = ['rank', 'title', 'worldwide', 'domestic', 'dom%', 'foreign', 'for%']
 
+# Arrange datakeys
 db_data = {}
 for key in data_keys: db_data[key] = list()
 
+# Store data
 row = soup.find_all('tr')
-for r in row:
-    data = r.find_all('td')
+for r in range(1, 101):
+    data = row[r].find_all('td')
     for d in data:
         element = d.get_text()
-        # print(element)
-        if element == '-':
-            element = 'NULL'
+        if data_keys[data.index(d)] == 'worldwide' and element in db_data[data_keys[data.index(d)]]:
+            continue
         db_data[data_keys[data.index(d)]].append(element)
-    #  print('\n=========================================\n')
 
-# for key in db_data.keys():
-#     print(len(db_data[key]))
-i = 1
-for k in db_data['Foreign']:
-    print(k, i)
-    i+=1
+# Minor adjustments (removing 'foreign and 'for%' as the data scrape got a little off)
+db_data.pop('foreign')
+db_data.pop('for%')
+
+# Create dataframe and CSV
+df = pd.DataFrame(db_data)
+df.to_csv('topmovies.csv', index=False)
 # %%
